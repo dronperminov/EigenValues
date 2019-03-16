@@ -324,6 +324,82 @@ void QRDecompositionMethod(Matrix A, double eps) {
 	cout << endl;
 }
 
+// разложение Холецкого
+void CholeskyDecompositionMethod(Matrix A, double eps) {
+	int n = A.rows();
+
+	int iteration = 0;
+
+	Matrix L(n);
+
+	// проверка матрицы на симметричность
+	for (int i = 0; i < n; i++)
+		for (int j = i + 1; j < n; j++)
+			if (A(i, j) != A(j, i))
+				iteration = maxIterations;
+
+	while (iteration < maxIterations) {
+		for (int i = 0; i < n; i++) {
+			double sum = A(i, i);
+
+			for (int k = 0; k < i; k++)
+				sum -= L(i, k) * L(i, k);
+
+			// корень из отрицательных чисел извлечь нельзя
+			if (sum < 0) {
+				iteration = maxIterations - 1;
+				break;
+			}
+
+			L(i, i) = sqrt(sum);
+
+			for (int j = i; j < n; j++) {
+				sum = 0;
+
+				for (int k = 0; k < i; k++)
+					sum += L(i, k) * L(j, k);
+
+				L(j, i) = (A(j, i) - sum) / L(i, i);
+			}
+		}
+
+		double max = 0;
+
+		// ищем максимальное по модулю значение вне диагонали
+		for (int i = 0; i < n; i++)
+			for (int j = i + 1; j < n; j++)
+				if (fabs(A(i, j)) > max)
+					max = fabs(A(i, j));
+
+		if (max < eps)
+			break;
+
+		A = L.Transpose() * L; // находим матрицу следующей итерации
+		iteration++;
+	}
+
+	cout << "Holetskii decomposition method:" << endl;
+	
+	if (iteration == maxIterations) {
+		cout << "Unable to find eigenvalues" << endl;
+	}
+	else {
+		cout << "Eigenvalues: ";
+
+		for (int i = 0; i < n; i++) {
+			if (fabs(A(i, i)) < eps)
+				cout << "0 ";
+			else
+				cout << setprecision(15) << A(i, i) << " ";
+		}
+
+		cout << endl;
+		cout << "Iterations: " << iteration << endl;
+	}
+
+	cout << endl;
+}
+
 int main() {
 	Matrix A = ReadMatrix(); // считываем матрицу
 
@@ -338,4 +414,5 @@ int main() {
 	LUDecompositionMethod(A, eps); // находим все собственные значения по методу LU разложения
 	LRDecompositionMethod(A, eps); // находим все собственные значения по методу LR разложения
 	QRDecompositionMethod(A, eps); // находим все собственные значения по методу QR разложения
+	CholeskyDecompositionMethod(A, eps); // находим все собственные значения по методу разложения Холецкого
 }
