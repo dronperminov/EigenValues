@@ -66,9 +66,9 @@ void PowerMethod(const Matrix& A,  double eps) {
 // метод вращений Якоби
 void RotationJakobiMethod(Matrix A, double eps) {
 	int n = A.rows();
-	int k = 0;
+	int iteration = 0; // номер итерации
 
-	while (true && k < maxIterations) {
+	while (iteration < maxIterations) {
 		double max = 0;
 
 		// находим максимальный по модулю элемент в верхней треугольной части матрицы
@@ -105,12 +105,12 @@ void RotationJakobiMethod(Matrix A, double eps) {
 			}
 		}
 
-		k++;
+		iteration++;
 	}
 
 	cout << "Rotation Jakobi method:" << endl;
 
-	if (k == maxIterations) {
+	if (iteration == maxIterations) {
 		cout << "Unable to find eigenvalues" << endl;
 	}
 	else {
@@ -124,7 +124,7 @@ void RotationJakobiMethod(Matrix A, double eps) {
 		}
 
 		cout << endl;
-		cout << "Iterations: " << k << endl;
+		cout << "Iterations: " << iteration << endl;
 	}
 
 	cout << endl;
@@ -137,17 +137,10 @@ void LUDecompositionMethod(Matrix A, double eps) {
 	Matrix L(n);
 	Matrix U(n);
 
-	int k = 0;
+	int iteration = 0;
 
-	while (true && k < maxIterations) {
+	while (iteration < maxIterations) {
 		// выполняем LU разложение матрицы
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < n; j++) {
-				L(i, j) = 0;
-				U(i, j) = 0;
-			}
-		}
-
 		for (int j = 0; j < n; j++) {
 			U(0, j) = A(0, j);
 			L(j, 0) = A(j, 0) / U(0, 0);
@@ -167,9 +160,6 @@ void LUDecompositionMethod(Matrix A, double eps) {
 				for (int k = 0; k < i; k++)
 					sum += L(j, k) * U(k, i);
 
-				if (U(i, i) == 0)
-					k = maxIterations - 1;
-
 				L(j, i) = (A(j, i) - sum) / U(i, i);
 			}
 		}
@@ -187,11 +177,12 @@ void LUDecompositionMethod(Matrix A, double eps) {
 			break; // выходим
 
 		A = U * L; // иначе задаём новую матрицу
-		k++; // увеличиваем число итераций
+		iteration++; // увеличиваем число итераций
 	}
 
 	cout << "LU decomposition method:" << endl;
-	if (k == maxIterations) {
+	
+	if (iteration == maxIterations) {
 		cout << "Unable to find eigenvalues" << endl;
 	}
 	else {
@@ -205,7 +196,81 @@ void LUDecompositionMethod(Matrix A, double eps) {
 		}
 
 		cout << endl;
-		cout << "Iterations: " << k << endl;
+		cout << "Iterations: " << iteration << endl;
+	}
+
+	cout << endl;
+}
+
+// LR метод
+void LRDecompositionMethod(Matrix A, double eps) {
+	int n = A.rows();
+
+	int iteration = 0; // номер итерации
+
+	Matrix L(n);
+	Matrix R(n);
+
+	while (iteration < maxIterations) {
+		// выполняем LR разложение
+		for (int i = 0; i < n; i++) {
+			L(i, i) = 1; // на диагонали у матрицы L единицы
+			R(0, i) = A(0, i);
+		}
+
+		for (int i = 1; i < n; i++)
+			L(i, 0) = A(i, 0) / R(0, 0);
+
+		for (int i = 1; i < n; i++) {
+			for (int k = i; k < n; k++) {
+				R(i, k) = A(i, k);
+
+				for (int j = 0; j < i; j++)
+					R(i, k) -= L(i, j) * R(j, k);
+			}
+
+			for (int k = 1; k < i + 1 && i < n - 1; k++) {
+				L(i + 1, k) = A(i + 1, k);
+
+				for (int j = 0; j < k; j++)
+					L(i + 1, k) -= L(i + 1, j) * R(j, k);
+
+				L(i + 1, k) /= R(k, k);
+			}
+		}
+
+		// ищем максимальный по модулю элемент под главной диагональю матрицы L
+		double max = 0;
+
+		for (int i = 0; i < n; i++)
+			for (int j = 0; j < i; j++)
+				if (fabs(L(i, j)) > max)
+					max = fabs(L(i, j));
+
+		// если он меньше eps
+		if (max < eps)
+			break; // выходим
+		
+		A = R * L; // новя матрица есть R * L
+		iteration++;
+	}
+
+	cout << "LR decomposition method:" << endl;
+	if (iteration == maxIterations) {
+		cout << "Unable to find eigenvalues" << endl;
+	}
+	else {
+		cout << "Eigenvalues: ";
+
+		for (int i = 0; i < n; i++) {
+			if (fabs(R(i, i)) < eps)
+				cout << "0 ";
+			else
+				cout << setprecision(15) << R(i, i) << " ";
+		}
+
+		cout << endl;
+		cout << "Iterations: " << iteration << endl;
 	}
 
 	cout << endl;
@@ -223,4 +288,5 @@ int main() {
 	PowerMethod(A, eps); // находим наибольшее собственное число
 	RotationJakobiMethod(A, eps); // находим все собственные значения по методу вращений Якоби
 	LUDecompositionMethod(A, eps); // находим все собственные значения по методу LU разложения
-}	
+	LRDecompositionMethod(A, eps); // находим все собственные значения по методу LR разложения
+}
