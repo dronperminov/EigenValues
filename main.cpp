@@ -130,6 +130,87 @@ void RotationJakobiMethod(Matrix A, double eps) {
 	cout << endl;
 }
 
+// LU метод
+void LUDecompositionMethod(Matrix A, double eps) {
+	int n = A.rows();
+
+	Matrix L(n);
+	Matrix U(n);
+
+	int k = 0;
+
+	while (true && k < maxIterations) {
+		// выполняем LU разложение матрицы
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				L(i, j) = 0;
+				U(i, j) = 0;
+			}
+		}
+
+		for (int j = 0; j < n; j++) {
+			U(0, j) = A(0, j);
+			L(j, 0) = A(j, 0) / U(0, 0);
+		}
+
+		for (int i = 1; i < n; i++) {
+			for (int j = i; j < n; j++) {
+				double sum = 0;
+
+				for (int k = 0; k < i; k++)
+					sum += L(i, k) * U(k, j);
+
+				U(i, j) = A(i, j) - sum;
+			
+				sum = 0;
+
+				for (int k = 0; k < i; k++)
+					sum += L(j, k) * U(k, i);
+
+				if (U(i, i) == 0)
+					k = maxIterations - 1;
+
+				L(j, i) = (A(j, i) - sum) / U(i, i);
+			}
+		}
+
+		// ищем максимальный по модулю элемент под главной диагональю матрицы L
+		double max = 0;
+
+		for (int i = 0; i < n; i++)
+			for (int j = 0; j < i; j++)
+				if (fabs(L(i, j)) > max)
+					max = fabs(L(i, j));
+
+		// если он меньше eps
+		if (max < eps)
+			break; // выходим
+
+		A = U * L; // иначе задаём новую матрицу
+		k++; // увеличиваем число итераций
+	}
+
+	cout << "LU decomposition method:" << endl;
+	if (k == maxIterations) {
+		cout << "Unable to find eigenvalues" << endl;
+	}
+	else {
+		cout << "Eigenvalues: ";
+
+		for (int i = 0; i < n; i++) {
+			if (fabs(U(i, i)) < eps)
+				cout << "0 ";
+			else
+				cout << setprecision(15) << U(i, i) << " ";
+		}
+
+		cout << endl;
+		cout << "Iterations: " << k << endl;
+	}
+
+	cout << endl;
+}
+
 int main() {
 	Matrix A = ReadMatrix(); // считываем матрицу
 
@@ -141,4 +222,5 @@ int main() {
 
 	PowerMethod(A, eps); // находим наибольшее собственное число
 	RotationJakobiMethod(A, eps); // находим все собственные значения по методу вращений Якоби
+	LUDecompositionMethod(A, eps); // находим все собственные значения по методу LU разложения
 }	
