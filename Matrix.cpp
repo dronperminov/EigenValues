@@ -138,6 +138,35 @@ void Matrix::Read() {
 	}
 }
 
+// получение транспонированной матрицы
+Matrix Matrix::Transpose() const {
+	Matrix T(m, n); // создаём матрицу
+
+	for (int i = 0; i < m; i++)
+		for (int j = 0; j < n; j++)
+			T.values[i][j] = values[j][i]; // копируем транспонированные элементы
+
+	return T; // возвращаем матрицу
+}
+
+// создание матрицы поворота
+Matrix Matrix::RotationMatrix(int n, int i, int j, double theta) {
+	Matrix R(n);
+
+	// на главной диагонали единицы
+	for (int k = 0; k < n; k++)
+		R.values[k][k] = 1;
+
+	// а в элементах j0 k0 косинусы и синусы угла theta
+	R.values[i][i] = cos(theta);
+	R.values[j][j] = cos(theta);
+
+	R.values[i][j] = -sin(theta);
+	R.values[j][i] = sin(theta);
+
+	return R; // возвращаем матрицу поворота
+}
+
 // деструктор (освобождение памяти)
 Matrix::~Matrix() {
 	for (int i = 0; i < n; i++)

@@ -30,6 +30,9 @@ public:
 	
 	void Read(); // заполнение матрицы с клавиатуры
 	
+	Matrix Transpose() const; // получение транспонированной матрицы
+	static Matrix RotationMatrix(int n, int i, int j, double theta); // получение матрицы поворота
+
 	~Matrix(); // деструктор (освобождение памяти)
 
 	friend std::ostream& operator<<(std::ostream& os, const Matrix& matrix); // вывод в поток
