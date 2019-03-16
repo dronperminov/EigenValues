@@ -31,6 +31,8 @@ public:
 	void Read(); // заполнение матрицы с клавиатуры
 	
 	Matrix Transpose() const; // получение транспонированной матрицы
+	Matrix Ortonormalize() const;
+
 	static Matrix RotationMatrix(int n, int i, int j, double theta); // получение матрицы поворота
 
 	~Matrix(); // деструктор (освобождение памяти)

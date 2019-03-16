@@ -256,6 +256,7 @@ void LRDecompositionMethod(Matrix A, double eps) {
 	}
 
 	cout << "LR decomposition method:" << endl;
+	
 	if (iteration == maxIterations) {
 		cout << "Unable to find eigenvalues" << endl;
 	}
@@ -267,6 +268,53 @@ void LRDecompositionMethod(Matrix A, double eps) {
 				cout << "0 ";
 			else
 				cout << setprecision(15) << R(i, i) << " ";
+		}
+
+		cout << endl;
+		cout << "Iterations: " << iteration << endl;
+	}
+
+	cout << endl;
+}
+
+// QR метод
+void QRDecompositionMethod(Matrix A, double eps) {
+	int n = A.rows();
+
+	int iteration = 0; // номер итерации
+
+	while (iteration < maxIterations) {
+		Matrix Q = A.Ortonormalize();
+		Matrix R = Q.Transpose() * A;
+
+		double max = 0;
+
+		// ищем максимальный внедиагональный элемент матрицы Q
+		for (int i = 0; i < n; i++)
+			for (int j = i + 1; j < n; j++)
+				if (fabs(Q(i, j)) > max)
+					max = fabs(Q(i, j));
+
+		if (max < eps)
+			break;
+
+		A = R * Q;
+		iteration++;
+	}
+
+	cout << "QR decomposition method:" << endl;
+	
+	if (iteration == maxIterations) {
+		cout << "Unable to find eigenvalues" << endl;
+	}
+	else {
+		cout << "Eigenvalues: ";
+
+		for (int i = 0; i < n; i++) {
+			if (fabs(A(i, i)) < eps)
+				cout << "0 ";
+			else
+				cout << setprecision(15) << A(i, i) << " ";
 		}
 
 		cout << endl;
@@ -289,4 +337,5 @@ int main() {
 	RotationJakobiMethod(A, eps); // находим все собственные значения по методу вращений Якоби
 	LUDecompositionMethod(A, eps); // находим все собственные значения по методу LU разложения
 	LRDecompositionMethod(A, eps); // находим все собственные значения по методу LR разложения
+	QRDecompositionMethod(A, eps); // находим все собственные значения по методу QR разложения
 }
