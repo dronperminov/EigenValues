@@ -24,7 +24,7 @@ Matrix ReadMatrix() {
 }
 
 // степенной метод (находит максимальное собственное значение)
-void PowerMethod(const Matrix& A,  double eps) {
+void PowerMethod(const Matrix& A, double eps) {
 	int n = A.rows();
 	Vector x0(n); // случайное начальное приближение
 
@@ -99,7 +99,21 @@ void RotationJakobiMethod(Matrix A, double eps) {
 					theta = atan(t); // находим угол
 				}
 
-				Matrix R = Matrix::RotationMatrix(n, i, j, theta); // создаём матрицу поворота
+				double cosphi = cos(theta);
+				double sinphi = sin(theta);
+
+				Matrix R(n); // матрица поворота
+
+				// на главной диагонали единицы
+				for (int k = 0; k < n; k++)
+					R(k, k) = 1;
+
+				// а в элементах i j косинусы и синусы угла theta
+				R(i, i) = cosphi;
+				R(j, j) = cosphi;
+
+				R(i, j) = -sinphi;
+				R(j, i) = sinphi;
 
 				A = R.Transpose() * A * R; // выполняем преобразование матрицы
 			}
@@ -277,15 +291,39 @@ void LRDecompositionMethod(Matrix A, double eps) {
 	cout << endl;
 }
 
-// QR метод
+// QR метод (процесс ортонормализации Грамма-Шмидта)
 void QRDecompositionMethod(Matrix A, double eps) {
 	int n = A.rows();
 
 	int iteration = 0; // номер итерации
 
 	while (iteration < maxIterations) {
-		Matrix Q = A.Ortonormalize();
-		Matrix R = Q.Transpose() * A;
+		Matrix Q(n);
+
+		// проводим процесс ортонормализации Грама-Шмидта
+		for (int i = 0; i < n; i++) {
+			double beta_i = 0;
+
+			for (int j = 0; j < n; j++) {
+				Q(i, j) = A(j, i);
+
+				for (int k = 0; k < i; k++) {
+					double s = 0;
+
+					for (int l = 0; l < n; l++)
+						s += A(l, i) * Q(k, l);
+
+					Q(i, j) -= s * Q(k, j);
+				}
+
+				beta_i += Q(i, j) * Q(i, j);
+			}
+
+			beta_i = sqrt(beta_i);
+
+			for (int j = 0; j < n; j++)
+				Q(i, j) /= beta_i; // нормируем вектор
+		}
 
 		double max = 0;
 
@@ -298,7 +336,7 @@ void QRDecompositionMethod(Matrix A, double eps) {
 		if (max < eps)
 			break;
 
-		A = R * Q;
+		A = Q * A * Q.Transpose();
 		iteration++;
 	}
 
