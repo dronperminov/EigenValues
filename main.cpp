@@ -155,26 +155,17 @@ void LUDecompositionMethod(Matrix A, double eps) {
 
 	while (iteration < maxIterations) {
 		// выполняем LU разложение матрицы
-		for (int j = 0; j < n; j++) {
-			U(0, j) = A(0, j);
-			L(j, 0) = A(j, 0) / U(0, 0);
-		}
-
-		for (int i = 1; i < n; i++) {
+		for (int i = 0; i < n; i++) {
 			for (int j = i; j < n; j++) {
-				double sum = 0;
+				U(i, j) = A(i, j);
+				L(j, i) = A(j, i);
 
-				for (int k = 0; k < i; k++)
-					sum += L(i, k) * U(k, j);
+				for (int k = 0; k < i; k++) {
+					U(i, j) -= L(i, k) * U(k, j);
+					L(j, i) -= L(j, k) * U(k, i);
+				}
 
-				U(i, j) = A(i, j) - sum;
-			
-				sum = 0;
-
-				for (int k = 0; k < i; k++)
-					sum += L(j, k) * U(k, i);
-
-				L(j, i) = (A(j, i) - sum) / U(i, i);
+				L(j, i) /= U(i, i);
 			}
 		}
 
@@ -228,28 +219,16 @@ void LRDecompositionMethod(Matrix A, double eps) {
 	while (iteration < maxIterations) {
 		// выполняем LR разложение
 		for (int i = 0; i < n; i++) {
-			L(i, i) = 1; // на диагонали у матрицы L единицы
-			R(0, i) = A(0, i);
-		}
+			for (int j = i; j < n; j++) {
+				R(i, j) = A(i, j);
+				L(j, i) = A(j, i);
 
-		for (int i = 1; i < n; i++)
-			L(i, 0) = A(i, 0) / R(0, 0);
-
-		for (int i = 1; i < n; i++) {
-			for (int k = i; k < n; k++) {
-				R(i, k) = A(i, k);
-
-				for (int j = 0; j < i; j++)
-					R(i, k) -= L(i, j) * R(j, k);
-			}
-
-			for (int k = 1; k < i + 1 && i < n - 1; k++) {
-				L(i + 1, k) = A(i + 1, k);
-
-				for (int j = 0; j < k; j++)
-					L(i + 1, k) -= L(i + 1, j) * R(j, k);
-
-				L(i + 1, k) /= R(k, k);
+				for (int k = 0; k < i; k++) {
+					R(i, j) -= L(i, k) * R(k, j);
+					L(j, i) -= L(j, k) * R(k, i);
+				}
+				
+				L(j, i) /= R(i, i);
 			}
 		}
 
@@ -298,31 +277,28 @@ void QRDecompositionMethod(Matrix A, double eps) {
 	int iteration = 0; // номер итерации
 
 	while (iteration < maxIterations) {
+		Matrix R(n);
 		Matrix Q(n);
 
 		// проводим процесс ортонормализации Грама-Шмидта
-		for (int i = 0; i < n; i++) {
-			double beta_i = 0;
+		for (int j = 0; j < n; j++) {
+			for (int i = 0; i < j; i++)
+				for (int k = 0; k < n; k++)
+					R(i, j) += A(k, j) * Q(k, i);
 
-			for (int j = 0; j < n; j++) {
-				Q(i, j) = A(j, i);
+			for (int i = 0; i < n; i++) {
+				Q(i, j) = A(i, j);
 
-				for (int k = 0; k < i; k++) {
-					double s = 0;
+				for (int k = 0; k < j; k++)
+					Q(i, j) -= R(k, j) * Q(i, k);
 
-					for (int l = 0; l < n; l++)
-						s += A(l, i) * Q(k, l);
-
-					Q(i, j) -= s * Q(k, j);
-				}
-
-				beta_i += Q(i, j) * Q(i, j);
+				R(j, j) += Q(i, j) * Q(i, j);
 			}
 
-			beta_i = sqrt(beta_i);
+			R(j, j) = sqrt(R(j, j));
 
-			for (int j = 0; j < n; j++)
-				Q(i, j) /= beta_i; // нормируем вектор
+			for (int i = 0; i < n; i++)
+				Q(i, j) /= R(j, j); // нормируем вектор
 		}
 
 		double max = 0;
@@ -336,7 +312,7 @@ void QRDecompositionMethod(Matrix A, double eps) {
 		if (max < eps)
 			break;
 
-		A = Q * A * Q.Transpose();
+		A = R * Q;
 		iteration++;
 	}
 
@@ -385,7 +361,7 @@ void CholeskyDecompositionMethod(Matrix A, double eps) {
 
 			// корень из отрицательных чисел извлечь нельзя
 			if (sum < 0) {
-				iteration = maxIterations - 1;
+				iteration = maxIterations;
 				break;
 			}
 
@@ -418,7 +394,7 @@ void CholeskyDecompositionMethod(Matrix A, double eps) {
 
 	cout << "Holetskii decomposition method:" << endl;
 	
-	if (iteration == maxIterations) {
+	if (iteration >= maxIterations) {
 		cout << "Unable to find eigenvalues" << endl;
 	}
 	else {
